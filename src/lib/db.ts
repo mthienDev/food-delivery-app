@@ -1,0 +1,19 @@
+// Prisma client singleton (Prisma v7 + Neon serverless driver adapter)
+// Prevents multiple instances in dev (hot-reload)
+// Pool import not needed — PrismaNeon accepts PoolConfig directly
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+
+function createPrismaClient() {
+  // PrismaNeon is a factory — pass PoolConfig directly (Prisma v7 + @prisma/adapter-neon)
+  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+  return new PrismaClient({ adapter });
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
